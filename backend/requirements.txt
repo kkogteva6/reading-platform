@@ -2,5 +2,9 @@ fastapi
 uvicorn[standard]
 python-dotenv
 pydantic
-neo4j
 pydantic-settings
+neo4j
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+email-validator
