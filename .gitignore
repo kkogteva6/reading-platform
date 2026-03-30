@@ -1,0 +1,50 @@
+# Python
+.venv/
+venv/
+backend/venv/
+backend/app/__pycache__/
+__pycache__/
+*.pyc
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+node_modules
+dist
+.env
+.env.local
+.DS_Store
+backend/.env
+frontend/.env
+
+
+# Общие
+.env
+.DS_Store
+.idea/
+.vscode/
+
+
+# Archives
+*.zip
+
+# Large folders
+checkpoints/
+backend/checkpoints/
+
+# Backend data: исключаем не всё, а выборочно
+backend/data/models/
+backend/data/model/
+backend/data/sbert_finetuned/
+backend/data/*.pt
+backend/data/*.bin
+backend/data/*.safetensors
+backend/data/*.ckpt
+backend/data/*.sqlite
+backend/data/*.db
+
+# Если нужна папка covers — НЕ исключаем её
+!backend/data/covers/
+!backend/data/covers/**
