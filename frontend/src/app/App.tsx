@@ -18,7 +18,7 @@ const ROLE_CARDS: Array<{ role: Role; title: string; desc: string }> = [
   { role: "admin", title: "Администратор", desc: "Пользователи и контент" },
 ];
 
-function BrandHeader(props: { title: string; subtitle: string }) {
+function BrandHeader(props: { title: string; subtitle?: string }) {
   return (
     <div className="header">
       <div className="brandRow">
@@ -46,9 +46,12 @@ function BrandHeader(props: { title: string; subtitle: string }) {
           <h1 className="title" style={{ margin: 0 }}>
             {props.title}
           </h1>
-          <p className="subtitle" style={{ marginBottom: 0 }}>
-            {props.subtitle}
-          </p>
+
+          {props.subtitle && (
+            <p className="subtitle" style={{ marginBottom: 0 }}>
+              {props.subtitle}
+            </p>
+          )}
         </div>
       </div>
     </div>

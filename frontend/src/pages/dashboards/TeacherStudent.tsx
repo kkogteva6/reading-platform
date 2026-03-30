@@ -19,6 +19,15 @@ type Status =
   | { kind: "ok"; text: string }
   | { kind: "error"; text: string };
 
+type WhyDeficitItem = {
+  concept: string;
+  deficit: number;
+};
+
+type WhyWithDeficits = {
+  deficits?: WhyDeficitItem[];
+};
+
 function fmtDT(iso?: string | null) {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -202,7 +211,15 @@ export default function TeacherStudent() {
                     strokeWidth="2"
                     strokeLinejoin="round"
                   />
-                  <line x1="32" y1="18" x2="32" y2="52" stroke="rgba(20,25,35,.55)" strokeWidth="2" strokeLinecap="round" />
+                  <line
+                    x1="32"
+                    y1="18"
+                    x2="32"
+                    y2="52"
+                    stroke="rgba(20,25,35,.55)"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 </svg>
               </div>
 
@@ -318,26 +335,30 @@ export default function TeacherStudent() {
               </div>
             ) : (
               <div className="recommendationsGrid">
-                {recs.map((x) => (
-                  <div key={x.work.id} className="recCard">
-                    <div className="recTitle">{x.work.title}</div>
-                    <div className="recMeta">
-                      {x.work.author} • возраст: {x.work.age}
-                    </div>
+                {recs.map((x) => {
+                  const why = (x.why ?? null) as WhyWithDeficits | null;
 
-                    <div className="whyBox">
-                      <div className="whyLabel">Почему рекомендуется</div>
-                      <div className="whyText">
-                        {x.why?.deficits?.length
-                          ? `Помогает развивать: ${x.why.deficits
-                              .slice(0, 4)
-                              .map((d) => `${d.concept} (${d.deficit.toFixed(2)})`)
-                              .join(", ")}`
-                          : "Недостаточно данных для подробного объяснения."}
+                  return (
+                    <div key={x.work.id} className="recCard">
+                      <div className="recTitle">{x.work.title}</div>
+                      <div className="recMeta">
+                        {x.work.author} • возраст: {x.work.age}
+                      </div>
+
+                      <div className="whyBox">
+                        <div className="whyLabel">Почему рекомендуется</div>
+                        <div className="whyText">
+                          {why?.deficits?.length
+                            ? `Помогает развивать: ${why.deficits
+                                .slice(0, 4)
+                                .map((d: WhyDeficitItem) => `${d.concept} (${d.deficit.toFixed(2)})`)
+                                .join(", ")}`
+                            : "Недостаточно данных для подробного объяснения."}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

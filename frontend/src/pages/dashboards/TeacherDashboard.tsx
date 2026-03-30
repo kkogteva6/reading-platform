@@ -23,6 +23,17 @@ type Status =
   | { kind: "ok"; text: string }
   | { kind: "error"; text: string };
 
+type StudentTableRow = {
+  student_id: string;
+  student_name?: string | null;
+  test_count: number;
+  text_count: number;
+  last_update_at?: string | null;
+  last_source?: string | null;
+  has_progress: boolean;
+  avg_profile_growth: number;
+};
+
 function fmtDT(iso?: string | null) {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -91,6 +102,20 @@ const tdStyle: React.CSSProperties = {
   fontSize: 14,
   verticalAlign: "top",
 };
+
+function normalizeStudentRow(s: Partial<StudentTableRow> & { student_id: string }): StudentTableRow {
+  return {
+    student_id: s.student_id,
+    student_name: s.student_name ?? null,
+    test_count: typeof s.test_count === "number" ? s.test_count : 0,
+    text_count: typeof s.text_count === "number" ? s.text_count : 0,
+    last_update_at: s.last_update_at ?? null,
+    last_source: s.last_source ?? null,
+    has_progress: Boolean(s.has_progress),
+    avg_profile_growth:
+      typeof s.avg_profile_growth === "number" ? s.avg_profile_growth : 0,
+  };
+}
 
 export default function TeacherDashboard() {
   const nav = useNavigate();
@@ -346,7 +371,21 @@ export default function TeacherDashboard() {
     return tips;
   }, [analytics]);
 
-  const studentsForTable = analytics?.students ?? students ?? [];
+  const studentsForTable = useMemo<StudentTableRow[]>(() => {
+    const analyticsStudentsRaw = (analytics?.students ?? []) as Array<
+      Partial<StudentTableRow> & { student_id: string }
+    >;
+
+    if (analyticsStudentsRaw.length > 0) {
+      return analyticsStudentsRaw.map(normalizeStudentRow);
+    }
+
+    const basicStudentsRaw = (students ?? []) as Array<
+      Partial<StudentTableRow> & { student_id: string }
+    >;
+
+    return basicStudentsRaw.map(normalizeStudentRow);
+  }, [analytics?.students, students]);
 
   return (
     <div className="page">
@@ -495,7 +534,6 @@ export default function TeacherDashboard() {
                     Обновить список
                   </button>
                 </div>
-
               </div>
 
               <div className="panel" style={{ marginTop: 14 }}>
@@ -722,7 +760,6 @@ export default function TeacherDashboard() {
                     Обновить
                   </button>
                 </div>
-
               </div>
 
               <div className="panel" style={{ marginTop: 14 }}>
@@ -786,9 +823,7 @@ export default function TeacherDashboard() {
                                 <button
                                   className="btn"
                                   onClick={() =>
-                                    nav(
-                                      `/teacher/student/${encodeURIComponent(s.student_id)}`
-                                    )
+                                    nav(`/teacher/student/${encodeURIComponent(s.student_id)}`)
                                   }
                                   type="button"
                                 >

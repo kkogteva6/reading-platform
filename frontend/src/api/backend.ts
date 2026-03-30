@@ -231,6 +231,13 @@ export type TeacherClassStudent = {
   student_id: string;
   student_name?: string | null;
   created_at: string;
+
+  test_count?: number;
+  text_count?: number;
+  last_update_at?: string | null;
+  last_source?: string | null;
+  has_progress?: boolean;
+  avg_profile_growth?: number;
 };
 
 export type TeacherClassAnalytics = {
