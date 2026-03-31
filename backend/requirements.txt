@@ -9,3 +9,4 @@ passlib[bcrypt]
 python-multipart
 email-validator
 numpy
+sentence-transformers
