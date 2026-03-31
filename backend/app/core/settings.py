@@ -21,7 +21,8 @@ class Settings(BaseModel):
     # SBERT
     sbert_model_name: str = os.getenv(
         "SBERT_MODEL_NAME",
-        str((Path(__file__).resolve().parents[2] / "data" / "sbert_finetuned")),
+        # str((Path(__file__).resolve().parents[2] / "data" / "sbert_finetuned")),
+        "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
     )
 
 
