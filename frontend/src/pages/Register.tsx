@@ -27,11 +27,11 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
-    const res = register(email.trim(), password, role, displayName.trim());
+    const res = await register(email.trim(), password, role, displayName.trim());
     if (!res.ok) {
       setError(res.error || "Ошибка регистрации.");
       return;

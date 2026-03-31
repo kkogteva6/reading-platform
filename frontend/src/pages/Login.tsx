@@ -29,11 +29,11 @@ export default function Login() {
 
   const from = useMemo(() => (loc?.state?.from as string | undefined) ?? null, [loc]);
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
-    const res = login(email.trim(), password, role);
+    const res = await login(email.trim(), password, role);
     if (!res.ok) {
       setError(res.error || "Ошибка входа.");
       return;
