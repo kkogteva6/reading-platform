@@ -52,7 +52,7 @@ const emptyBook: BookRow = {
 function toBackendUrl(path?: string) {
   if (!path) return "";
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  return `http://127.0.0.1:8000${path}`;
+  return `https://reading-platform-backend.onrender.com${path}`;
 }
 
 function slugifyId(input: string) {

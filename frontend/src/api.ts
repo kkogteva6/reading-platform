@@ -1,6 +1,7 @@
 import { getToken } from "./auth";
 
-const API = "http://127.0.0.1:8000";
+// const API = "http://127.0.0.1:8000";
+const API = "https://reading-platform-backend.onrender.com";
 
 export async function apiJson<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getToken();
