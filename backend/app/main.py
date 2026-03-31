@@ -63,16 +63,26 @@ app.include_router(reading_router)
 def _shutdown():
     close_driver()
 
+# @app.on_event("startup")
+# def _startup():
+#     init_db()
+
+#     # 1) пробуем загрузить книги из Neo4j
+#     try:
+#         works = get_works_from_neo4j()
+#         WORKS.clear()
+#         WORKS.extend(works)
+#         print("WORKS size after neo4j:", len(WORKS))
+#     except Exception as e:
+#         print("FAILED to load WORKS from neo4j:", repr(e))
+#         print("WORKS size after neo4j:", len(WORKS))
+
+
 @app.on_event("startup")
 def _startup():
-    init_db()
-
-    # 1) пробуем загрузить книги из Neo4j
     try:
-        works = get_works_from_neo4j()
-        WORKS.clear()
-        WORKS.extend(works)
-        print("WORKS size after neo4j:", len(WORKS))
+        init_db()
     except Exception as e:
-        print("FAILED to load WORKS from neo4j:", repr(e))
-        print("WORKS size after neo4j:", len(WORKS))
+        print("DB init failed:", e)
+
+    print("Startup completed (safe mode)")
