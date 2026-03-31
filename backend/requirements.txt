@@ -8,8 +8,3 @@ python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
 email-validator
-numpy
-pandas
-scikit-learn
-sentence-transformers
-torch
