@@ -7,11 +7,11 @@ import { getToken, getUser } from "../auth";
 /* Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
+const API_BASE = "https://reading-platform-backend.onrender.com";
+
 function normalizeUrl(url: string): string {
   if (/^https?:\/\//i.test(url)) return url;
-  if (url.startsWith("/api/")) return url;
-  if (url.startsWith("/")) return `/api${url}`;
-  return `/api/${url}`;
+  return `${API_BASE}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
 function enc(x: unknown) {

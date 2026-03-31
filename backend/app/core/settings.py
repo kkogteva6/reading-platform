@@ -6,11 +6,18 @@ from pathlib import Path
 
 class Settings(BaseModel):
     # API
-    cors_origins: list[str] = os.getenv(
-        "CORS_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173,https://reading-platform-iota.vercel.app"
-    ).split(",")
+    # cors_origins: list[str] = os.getenv(
+    #     "CORS_ORIGINS",
+    #     "http://localhost:5173,http://127.0.0.1:5173,https://reading-platform-iota.vercel.app"
+    # ).split(",")
 
+    cors_origins: list[str] = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "https://reading-platform-iota.vercel.app",
+        "https://reading-platform-bq4mrb...vercel.app"
+    ]
+    
     # Auth / JWT
     jwt_secret: str = os.getenv("JWT_SECRET", "CHANGE_ME_PLEASE")
     # Neo4j
