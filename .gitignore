@@ -50,5 +50,4 @@ backend/data/*.db
 !backend/data/covers/**
 
 .codex-work/
-render.yaml
 l.c
