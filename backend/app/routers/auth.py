@@ -9,7 +9,11 @@ from ..db import create_user, get_user_by_email, get_user_by_id
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+pwd_ctx = CryptContext(
+    schemes=["pbkdf2_sha256", "bcrypt"],
+    deprecated="auto",
+)
 bearer = HTTPBearer(auto_error=False)
 
 ALGO = "HS256"

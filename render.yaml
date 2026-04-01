@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: reading-platform-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: http://localhost:5173,http://127.0.0.1:5173,https://reading-platform-iota.vercel.app,https://reading-platform-bq4mrbcov-kkogteva6s-projects.vercel.app
