@@ -35,7 +35,7 @@ def get_my_profile(user_id: int = Depends(get_current_user_id)):
     try:
         return get_profile(profile_id)
     except KeyError:
-        raise HTTPException(status_code=404, detail="profile not found")
+        return upsert_profile(ReaderProfile(id=profile_id, age="16+", concepts={}))
 
 
 @router.post("/me/profile", response_model=ReaderProfile)

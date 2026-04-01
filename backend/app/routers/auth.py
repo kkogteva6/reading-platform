@@ -6,6 +6,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 from ..core.settings import settings
 from ..db import create_user, get_user_by_email, get_user_by_id
+from ..schemas import ReaderProfile
+from ..services.profiles import upsert_profile
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -68,6 +70,8 @@ def register(data: RegisterIn):
         role=role,
         password_hash=password_hash,
     )
+
+    upsert_profile(ReaderProfile(id=str(user["id"]), age="16+", concepts={}))
 
     token = make_token(user["id"], user["role"])
     return {

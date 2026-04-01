@@ -1,5 +1,6 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from ..schemas import GapSummaryItem
+from ..schemas import ReaderProfile
 from ..services.profiles import get_profile
 from ..services.targets import TARGET_PROFILES
 
@@ -10,7 +11,7 @@ def get_gaps(reader_id: str):
     try:
         profile = get_profile(reader_id)
     except KeyError:
-        raise HTTPException(status_code=404, detail="profile not found")
+        profile = ReaderProfile(id=reader_id, age="16+", concepts={})
 
     target = TARGET_PROFILES.get(profile.age)
     if not target:

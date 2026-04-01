@@ -1307,13 +1307,24 @@ def add_read_book(
 
 
 def list_read_books(reader_id: str) -> list[dict[str, Any]]:
-    with get_conn() as conn:
-        rows = conn.execute("""
-            SELECT id, reader_id, work_id, title, author, age, rating, impression_text, concepts_json, created_at
-            FROM read_books
-            WHERE reader_id = ?
-            ORDER BY created_at DESC, id DESC
-        """, (reader_id,)).fetchall()
+    try:
+        with get_conn() as conn:
+            rows = conn.execute("""
+                SELECT id, reader_id, work_id, title, author, age, rating, impression_text, concepts_json, created_at
+                FROM read_books
+                WHERE reader_id = ?
+                ORDER BY created_at DESC, id DESC
+            """, (reader_id,)).fetchall()
+    except sqlite3.OperationalError:
+        # Older deployed SQLite files may not have the read_books table yet.
+        init_db()
+        with get_conn() as conn:
+            rows = conn.execute("""
+                SELECT id, reader_id, work_id, title, author, age, rating, impression_text, concepts_json, created_at
+                FROM read_books
+                WHERE reader_id = ?
+                ORDER BY created_at DESC, id DESC
+            """, (reader_id,)).fetchall()
 
     out = []
     for r in rows:
