@@ -48,3 +48,7 @@ backend/data/*.db
 # Если нужна папка covers — НЕ исключаем её
 !backend/data/covers/
 !backend/data/covers/**
+
+.codex-work/
+render.yaml
+l.c
