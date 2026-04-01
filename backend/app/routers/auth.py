@@ -11,7 +11,6 @@ from ..services.profiles import upsert_profile
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-
 pwd_ctx = CryptContext(
     schemes=["pbkdf2_sha256", "bcrypt"],
     deprecated="auto",
@@ -19,8 +18,8 @@ pwd_ctx = CryptContext(
 bearer = HTTPBearer(auto_error=False)
 
 ALGO = "HS256"
-
 ALLOWED_ROLES = {"student", "parent", "teacher", "admin"}
+
 
 class RegisterIn(BaseModel):
     name: str
@@ -28,23 +27,28 @@ class RegisterIn(BaseModel):
     password: str
     role: str
 
+
 class LoginIn(BaseModel):
     email: EmailStr
     password: str
     role: str
 
+
 class AuthOut(BaseModel):
     token: str
     user: dict
 
+
 def make_token(user_id: int, role: str) -> str:
     return jwt.encode({"sub": str(user_id), "role": role}, settings.jwt_secret, algorithm=ALGO)
+
 
 def decode_token(token: str) -> dict:
     try:
         return jwt.decode(token, settings.jwt_secret, algorithms=[ALGO])
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
 
 @router.post("/register", response_model=AuthOut)
 def register(data: RegisterIn):
@@ -61,7 +65,7 @@ def register(data: RegisterIn):
 
     pwd = data.password or ""
     if len(pwd.encode("utf-8")) > 72:
-        raise HTTPException(status_code=400, detail="Пароль слишком длинный (max 72 байта).")
+        raise HTTPException(status_code=400, detail="Пароль слишком длинный (max 72 байта)")
 
     password_hash = pwd_ctx.hash(data.password)
     user = create_user(
@@ -82,8 +86,9 @@ def register(data: RegisterIn):
             "email": user["email"],
             "name": user["name"],
             "role": user["role"],
-        }
+        },
     }
+
 
 @router.post("/login", response_model=AuthOut)
 def login(data: LoginIn):
@@ -94,14 +99,10 @@ def login(data: LoginIn):
 
     pwd = data.password or ""
     if len(pwd.encode("utf-8")) > 72:
-        raise HTTPException(status_code=400, detail="Пароль слишком длинный (max 72 байта).")
+        raise HTTPException(status_code=400, detail="Пароль слишком длинный (max 72 байта)")
 
     if not pwd_ctx.verify(data.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Неверный email или пароль")
-
-    # Если хочешь строго проверять выбранную роль:
-    if data.role.strip() != user["role"]:
-        raise HTTPException(status_code=403, detail="Роль не соответствует аккаунту")
 
     token = make_token(user["id"], user["role"])
     return {
@@ -112,8 +113,9 @@ def login(data: LoginIn):
             "email": user["email"],
             "name": user["name"],
             "role": user["role"],
-        }
+        },
     }
+
 
 @router.get("/me")
 def me(creds: HTTPAuthorizationCredentials | None = Depends(bearer)):
@@ -126,4 +128,9 @@ def me(creds: HTTPAuthorizationCredentials | None = Depends(bearer)):
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
 
-    return {"id": user["id"], "email": user["email"], "name": user["name"], "role": user["role"]}
+    return {
+        "id": user["id"],
+        "email": user["email"],
+        "name": user["name"],
+        "role": user["role"],
+    }
