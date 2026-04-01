@@ -1,6 +1,7 @@
 from typing import List
 from ..schemas import Work
 from ..core.neo4j import get_driver
+from ..core.settings import settings
 
 
 def get_works_from_neo4j() -> List[Work]:
@@ -20,7 +21,7 @@ def get_works_from_neo4j() -> List[Work]:
     works: List[Work] = []
     driver = get_driver()
 
-    with driver.session() as session:
+    with driver.session(database=settings.neo4j_database) as session:
         for rec in session.run(query):
             concepts_dict = {
                 item["name"]: float(item["weight"])

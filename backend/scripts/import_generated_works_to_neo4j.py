@@ -4,8 +4,9 @@ from neo4j import GraphDatabase
 import os
 
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://127.0.0.1:17687")
-NEO4J_USER = os.getenv("NEO4J_USER", "neo4j")
+NEO4J_USER = os.getenv("NEO4J_USER") or os.getenv("NEO4J_USERNAME", "neo4j")
 NEO4J_PASS = os.getenv("NEO4J_PASSWORD", "neo4j12345")
+NEO4J_DATABASE = os.getenv("NEO4J_DATABASE", "neo4j")
 
 
 def main():
@@ -34,7 +35,7 @@ def main():
     RETURN c.name, r.weight
     """
 
-    with driver.session(database="neo4j") as session:
+    with driver.session(database=NEO4J_DATABASE) as session:
         for w in works:
             session.run(
                 work_cypher,
