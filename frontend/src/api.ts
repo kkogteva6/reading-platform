@@ -1,7 +1,7 @@
 import { getToken } from "./auth";
+import { getBackendBase } from "./config/backend";
 
-// const API = "http://127.0.0.1:8000";
-const API = "https://reading-platform-backend.onrender.com";
+const API = getBackendBase();
 
 export async function apiJson<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getToken();

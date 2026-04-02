@@ -22,6 +22,7 @@ import {
   type AdminUserFull,
   type AdminUserRow,
 } from "../../api/backend";
+import { toBackendUrl } from "../../config/backend";
 
 type AdminTab = "books" | "analytics" | "profiles";
 
@@ -48,12 +49,6 @@ const emptyBook: BookRow = {
   annotation: "",
   cover_image: "",
 };
-
-function toBackendUrl(path?: string) {
-  if (!path) return "";
-  if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  return `https://reading-platform-backend.onrender.com${path}`;
-}
 
 function slugifyId(input: string) {
   const map: Record<string, string> = {

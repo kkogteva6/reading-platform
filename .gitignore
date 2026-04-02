@@ -51,3 +51,6 @@ backend/data/*.db
 
 .codex-work/
 l.c
+HOME_SETUP.md
+frontend/.env.local
+backend/.env.local

@@ -2,12 +2,13 @@
 // Универсальный API-клиент для фронтенда ReadingPlatform
 
 import { getToken, getUser } from "../auth";
+import { getBackendBase } from "../config/backend";
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                            */
 /* ------------------------------------------------------------------ */
 
-const API_BASE = "https://reading-platform-backend.onrender.com";
+const API_BASE = getBackendBase();
 
 function normalizeUrl(url: string): string {
   if (/^https?:\/\//i.test(url)) return url;

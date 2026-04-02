@@ -1,7 +1,8 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
 import type { Role } from "../mock/users";
+import { getBackendBase } from "../config/backend";
 
-const API_BASE = "https://reading-platform-backend.onrender.com";
+const API_BASE = getBackendBase();
 
 type AuthUser = {
   id: string;
