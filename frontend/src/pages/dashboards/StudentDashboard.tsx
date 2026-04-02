@@ -25,7 +25,7 @@ import {
   type AccountInfo,
   type ProfileGrowth,
 } from "../../api/backend";
-import { toBackendUrl } from "../../config/backend";
+import { toCoverUrl } from "../../config/backend";
 
 type TabKey = "account" | "texts" | "test" | "results" | "read";
 
@@ -1296,9 +1296,7 @@ export default function StudentDashboard() {
               <div className="bookCoverMock">
                 {openedBook.work.cover_image ? (
                   <img
-                    src={openedBook.work.cover_image.startsWith("/covers/")
-                      ? toBackendUrl(openedBook.work.cover_image)
-                      : openedBook.work.cover_image}
+                    src={toCoverUrl(openedBook.work.cover_image)}
                     alt={openedBook.work.title}
                     className="bookModalRealCover"
                   />
@@ -1549,9 +1547,7 @@ function RecommendationCard({
       <div className="bookCardCover">
         {item.work.cover_image ? (
           <img
-            src={item.work.cover_image.startsWith("/covers/")
-              ? toBackendUrl(item.work.cover_image)
-              : item.work.cover_image}
+            src={toCoverUrl(item.work.cover_image)}
             alt={item.work.title}
             className="bookRealCover"
           />

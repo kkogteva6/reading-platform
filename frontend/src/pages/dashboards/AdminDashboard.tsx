@@ -22,7 +22,7 @@ import {
   type AdminUserFull,
   type AdminUserRow,
 } from "../../api/backend";
-import { toBackendUrl } from "../../config/backend";
+import { toCoverUrl } from "../../config/backend";
 
 type AdminTab = "books" | "analytics" | "profiles";
 
@@ -684,7 +684,7 @@ export default function AdminDashboard() {
                   <div className="coverPreviewWrap">
                     <div className="coverPreviewBox">
                       {form.cover_image ? (
-                        <img className="coverPreviewImg" src={toBackendUrl(form.cover_image)} alt={form.title || "cover"} />
+                        <img className="coverPreviewImg" src={toCoverUrl(form.cover_image)} alt={form.title || "cover"} />
                       ) : (
                         <div className="coverPreviewEmpty">Обложка не выбрана</div>
                       )}
@@ -763,7 +763,7 @@ export default function AdminDashboard() {
                           <td style={tdStyle}>
                             {b.cover_image ? (
                               <img
-                                src={toBackendUrl(b.cover_image)}
+                                src={toCoverUrl(b.cover_image)}
                                 alt={b.title}
                                 style={{
                                   width: 60,
