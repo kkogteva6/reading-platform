@@ -13,6 +13,7 @@ from ..store import WORKS
 from .targets import TARGET_PROFILES, CONCEPT_ALIASES
 from ..services.profiles import get_profile
 from ..db import list_read_book_ids
+from .graph import get_works_from_neo4j
 
 # ----------------------------- Age helpers -----------------------------
 
@@ -151,6 +152,27 @@ def has_meaningful_profile_data(profile: ReaderProfile) -> bool:
     return sum(float(v) for v in profile.concepts.values()) > 1e-6
 
 
+def ensure_works_loaded() -> None:
+    """
+    Recommendations read books from the in-memory WORKS cache.
+    In local/home mode startup stays "safe", so we lazily populate the cache
+    on first recommendation request instead of forcing Neo4j during app boot.
+    """
+    if WORKS:
+        return
+
+    try:
+        works = get_works_from_neo4j()
+    except Exception as e:
+        print("FAILED to lazy-load WORKS from neo4j:", repr(e))
+        return
+
+    if works:
+        WORKS.clear()
+        WORKS.extend(works)
+        print("WORKS size after lazy neo4j load:", len(WORKS))
+
+
 def recommend_works_explain(
     profile: ReaderProfile,
     works: List[Work],
@@ -218,6 +240,8 @@ def get_recommendations_explain(reader_id: str, top_n: int = 5):
 
     if isinstance(profile, str):
         raise TypeError(f"get_profile() returned str, expected ReaderProfile. value={profile!r}")
+
+    ensure_works_loaded()
 
     read_ids_raw = list_read_book_ids(reader_id)
     read_ids = {str(x).strip().lower() for x in read_ids_raw}

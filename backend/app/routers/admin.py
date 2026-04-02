@@ -18,6 +18,8 @@ from ..db import (
 )
 
 from ..core.admin_guard import require_admin
+from ..store import WORKS
+from ..services.graph import get_works_from_neo4j
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -259,7 +261,18 @@ def rebuild_works(_admin=Depends(require_admin)):
 def import_works_neo4j(_admin=Depends(require_admin)):
     if not WORKS_JSON.exists():
         raise HTTPException(status_code=400, detail="Нет works.json. Сначала вызови POST /admin/rebuild_works")
-    return _run_script(IMPORT_SCRIPT)
+    result = _run_script(IMPORT_SCRIPT)
+
+    try:
+        works = get_works_from_neo4j()
+        WORKS.clear()
+        WORKS.extend(works)
+        result["works_cached"] = len(WORKS)
+    except Exception as e:
+        result["works_cached"] = len(WORKS)
+        result["cache_warning"] = f"Neo4j cache refresh failed: {e!r}"
+
+    return result
 
 
 @router.post("/publish")
