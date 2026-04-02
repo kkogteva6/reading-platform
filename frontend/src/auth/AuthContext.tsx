@@ -93,6 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "ngrok-skip-browser-warning": "true",
             },
             body: JSON.stringify({
               email: email.trim(),
@@ -134,6 +135,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "ngrok-skip-browser-warning": "true",
             },
             body: JSON.stringify({
               name: displayName.trim() || "Пользователь",

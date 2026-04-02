@@ -7,6 +7,7 @@ export async function apiJson<T>(path: string, init: RequestInit = {}): Promise<
   const token = getToken();
   const headers = new Headers(init.headers || {});
   headers.set("Content-Type", "application/json");
+  headers.set("ngrok-skip-browser-warning", "true");
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
   const res = await fetch(API + path, { ...init, headers });

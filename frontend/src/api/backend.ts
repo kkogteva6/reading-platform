@@ -25,6 +25,7 @@ function isFormData(body: unknown): body is FormData {
 
 function withAuthHeaders(initHeaders?: HeadersInit, init?: RequestInit): Headers {
   const h = new Headers(initHeaders || {});
+  h.set("ngrok-skip-browser-warning", "true");
 
   const token = getToken();
   if (token && !h.has("Authorization")) {
