@@ -1839,7 +1839,7 @@ function TestPanel(props: {
         const savedIds = Array.isArray(parsed?.orderedIds) ? parsed.orderedIds.map(String) : [];
         if (savedIds.length) {
           const byId = new Map(base.map((q) => [q.id, q]));
-          const restored = savedIds.map((id) => byId.get(id)).filter(Boolean) as QuestionItem[];
+          const restored = savedIds.map((id: string) => byId.get(id)).filter(Boolean) as QuestionItem[];
           if (restored.length === base.length) return restored;
         }
       }
