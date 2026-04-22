@@ -136,6 +136,21 @@ def ensure_works_loaded() -> None:
         print("WORKS size after lazy neo4j load:", len(WORKS))
 
 
+def select_priority_gaps(
+    gaps: List[Dict[str, Any]],
+    mode: Literal["correction", "deepening"],
+    limit: int = 4,
+) -> List[Dict[str, Any]]:
+    if mode == "correction":
+        relevant = [gap for gap in gaps if float(gap["gap"]) > 0]
+        relevant.sort(key=lambda gap: float(gap["gap"]), reverse=True)
+    else:
+        relevant = [gap for gap in gaps if float(gap["gap"]) < 0]
+        relevant.sort(key=lambda gap: abs(float(gap["gap"])), reverse=True)
+
+    return relevant[:limit]
+
+
 def recommend_works_explain(
     profile: ReaderProfile,
     works: List[Work],
@@ -155,13 +170,14 @@ def recommend_works_explain(
     gaps = compute_gaps(profile, target)
     has_below = any(float(item["gap"]) > 0 for item in gaps)
     mode: Literal["correction", "deepening"] = "correction" if has_below else "deepening"
+    priority_gaps = select_priority_gaps(gaps, mode=mode, limit=4)
 
     scored: List[Tuple[float, Work, List[GapItem]]] = []
     for work in works:
         if not is_age_compatible(profile.age, work.age):
             continue
 
-        score, why_items = work_score_by_gaps_with_explain(gaps, work, mode)
+        score, why_items = work_score_by_gaps_with_explain(priority_gaps, work, mode)
         if score > 0:
             scored.append((score, work, why_items))
 
