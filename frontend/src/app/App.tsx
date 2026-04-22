@@ -1,8 +1,8 @@
-import { Link, Route, Routes, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { Link, Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import { useState, type FormEvent } from "react";
 import Protected from "../Protected";
 
-import { roleHome, getUser, setUser, setToken, type Role } from "../auth";
+import { getUser, roleHome, setToken, setUser, type Role } from "../auth";
 import { apiJson } from "../api";
 
 import Student from "../pages/dashboards/StudentDashboard";
@@ -62,9 +62,7 @@ function Home() {
   return (
     <div className="container">
       <div className="card">
-        <BrandHeader
-          title="Платформа развивающего чтения"
-        />
+        <BrandHeader title="Платформа развивающего чтения" />
 
         <div className="content">
           <div className="panel">
@@ -87,8 +85,6 @@ function Home() {
                 <span className="arrow">→</span>
               </Link>
             </div>
-
-    
           </div>
         </div>
       </div>
@@ -98,25 +94,29 @@ function Home() {
 
 function Login() {
   const nav = useNavigate();
-  const loc = useLocation() as any;
+  const loc = useLocation() as { state?: { from?: string } };
 
   const [role, setRole] = useState<Role>("student");
-  const [email, setEmail] = useState("");
-  const [pass, setPass] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  async function doLogin() {
+  async function doLogin(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setError(null);
+
     try {
-      const out = await apiJson<{ token: string; user: any }>("/auth/login", {
+      const form = new FormData(e.currentTarget);
+      const email = String(form.get("email") ?? "").trim();
+      const password = String(form.get("password") ?? "");
+
+      const out = await apiJson<{ token: string; user: { role: Role } }>("/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password: pass, role }),
+        body: JSON.stringify({ email, password, role }),
       });
 
       setToken(out.token);
       setUser(out.user);
 
-      const from = (loc?.state?.from as string | undefined) ?? null;
+      const from = loc?.state?.from ?? null;
       nav(from ?? roleHome(out.user.role), { replace: true });
     } catch (e: any) {
       setError(e?.message || "Ошибка входа");
@@ -150,49 +150,45 @@ function Login() {
 
             <div className="panelTitle">Данные для входа</div>
 
-            <div className="formGrid">
-              <label className="field">
-                <span>Email</span>
-                <input
-                  name="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onInput={(e) => setEmail((e.target as HTMLInputElement).value)}
-                  autoComplete="username"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  inputMode="email"
-                  placeholder="name@example.com"
-                />
-              </label>
+            <form onSubmit={doLogin} autoComplete="on">
+              <div className="formGrid">
+                <label className="field">
+                  <span>Email</span>
+                  <input
+                    name="email"
+                    type="email"
+                    autoComplete="username"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    inputMode="email"
+                    placeholder="name@example.com"
+                  />
+                </label>
 
-              <label className="field">
-                <span>Пароль</span>
-                <input
-                  name="password"
-                  type="password"
-                  value={pass}
-                  onChange={(e) => setPass(e.target.value)}
-                  onInput={(e) => setPass((e.target as HTMLInputElement).value)}
-                  autoComplete="current-password"
-                  placeholder="••••"
-                />
-              </label>
-            </div>
+                <label className="field">
+                  <span>Пароль</span>
+                  <input
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="••••"
+                  />
+                </label>
+              </div>
 
-            {error && <div style={{ color: "crimson", marginTop: 12 }}>{error}</div>}
+              {error && <div style={{ color: "crimson", marginTop: 12 }}>{error}</div>}
 
-            <div style={{ display: "flex", gap: 10, marginTop: 14, alignItems: "center", flexWrap: "wrap" }}>
-              <button className="primaryBtn" type="button" onClick={doLogin}>
-                Войти
-              </button>
+              <div style={{ display: "flex", gap: 10, marginTop: 14, alignItems: "center", flexWrap: "wrap" }}>
+                <button className="primaryBtn" type="submit">
+                  Войти
+                </button>
 
-              <Link to="/register" className="linkBtn">
-                Нет аккаунта? Зарегистрироваться
-              </Link>
-            </div>
+                <Link to="/register" className="linkBtn">
+                  Нет аккаунта? Зарегистрироваться
+                </Link>
+              </div>
+            </form>
 
             <div style={{ marginTop: 10 }}>
               <Link to="/" className="linkBtn">
@@ -210,17 +206,21 @@ function Register() {
   const nav = useNavigate();
 
   const [role, setRole] = useState<Role>("student");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [pass, setPass] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  async function doRegister() {
+  async function doRegister(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
     setError(null);
+
     try {
-      const out = await apiJson<{ token: string; user: any }>("/auth/register", {
+      const form = new FormData(e.currentTarget);
+      const name = String(form.get("name") ?? "").trim();
+      const email = String(form.get("email") ?? "").trim();
+      const password = String(form.get("password") ?? "");
+
+      const out = await apiJson<{ token: string; user: { role: Role } }>("/auth/register", {
         method: "POST",
-        body: JSON.stringify({ role, name, email, password: pass }),
+        body: JSON.stringify({ role, name, email, password }),
       });
 
       setToken(out.token);
@@ -259,61 +259,54 @@ function Register() {
 
             <div className="panelTitle">Данные</div>
 
-            <div className="formGrid">
-              <label className="field">
-                <span>ФИО</span>
-                <input
-                  name="name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  onInput={(e) => setName((e.target as HTMLInputElement).value)}
-                  autoComplete="name"
-                  placeholder="Например: Иванова Анна Александровна"
-                />
-              </label>
+            <form onSubmit={doRegister} autoComplete="on">
+              <div className="formGrid">
+                <label className="field">
+                  <span>ФИО</span>
+                  <input
+                    name="name"
+                    autoComplete="name"
+                    placeholder="Например: Иванова Анна Александровна"
+                  />
+                </label>
 
-              <label className="field">
-                <span>Email</span>
-                <input
-                  name="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  onInput={(e) => setEmail((e.target as HTMLInputElement).value)}
-                  autoComplete="email"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  inputMode="email"
-                  placeholder="name@example.com"
-                />
-              </label>
+                <label className="field">
+                  <span>Email</span>
+                  <input
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    inputMode="email"
+                    placeholder="name@example.com"
+                  />
+                </label>
 
-              <label className="field">
-                <span>Пароль</span>
-                <input
-                  name="password"
-                  type="password"
-                  value={pass}
-                  onChange={(e) => setPass(e.target.value)}
-                  onInput={(e) => setPass((e.target as HTMLInputElement).value)}
-                  autoComplete="new-password"
-                  placeholder="Минимум 4 символа"
-                />
-              </label>
-            </div>
+                <label className="field">
+                  <span>Пароль</span>
+                  <input
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="Минимум 4 символа"
+                  />
+                </label>
+              </div>
 
-            {error && <div style={{ color: "crimson", marginTop: 12 }}>{error}</div>}
+              {error && <div style={{ color: "crimson", marginTop: 12 }}>{error}</div>}
 
-            <div style={{ display: "flex", gap: 10, marginTop: 14, alignItems: "center", flexWrap: "wrap" }}>
-              <button className="primaryBtn" type="button" onClick={doRegister}>
-                Создать аккаунт
-              </button>
+              <div style={{ display: "flex", gap: 10, marginTop: 14, alignItems: "center", flexWrap: "wrap" }}>
+                <button className="primaryBtn" type="submit">
+                  Создать аккаунт
+                </button>
 
-              <Link to="/login" className="linkBtn">
-                Уже есть аккаунт? Войти
-              </Link>
-            </div>
+                <Link to="/login" className="linkBtn">
+                  Уже есть аккаунт? Войти
+                </Link>
+              </div>
+            </form>
 
             <div style={{ marginTop: 10 }}>
               <Link to="/" className="linkBtn">
