@@ -681,7 +681,7 @@ export default function StudentDashboard() {
               </div>
             </div>
             <button className="btn" onClick={onLogout}>
-              Р’С‹Р№С‚Рё
+              Выйти
             </button>
           </div>
 
