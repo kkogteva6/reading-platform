@@ -2,7 +2,7 @@ import { Link, Navigate, Route, Routes, useLocation, useNavigate } from "react-r
 import { useState, type FormEvent } from "react";
 import Protected from "../Protected";
 
-import { getUser, roleHome, setToken, setUser, type Role } from "../auth";
+import { getUser, roleHome, setToken, setUser, type AuthUser, type Role } from "../auth";
 import { apiJson } from "../api";
 
 import Student from "../pages/dashboards/StudentDashboard";
@@ -108,7 +108,7 @@ function Login() {
       const email = String(form.get("email") ?? "").trim();
       const password = String(form.get("password") ?? "");
 
-      const out = await apiJson<{ token: string; user: { role: Role } }>("/auth/login", {
+      const out = await apiJson<{ token: string; user: AuthUser }>("/auth/login", {
         method: "POST",
         body: JSON.stringify({ email, password, role }),
       });
@@ -218,7 +218,7 @@ function Register() {
       const email = String(form.get("email") ?? "").trim();
       const password = String(form.get("password") ?? "");
 
-      const out = await apiJson<{ token: string; user: { role: Role } }>("/auth/register", {
+      const out = await apiJson<{ token: string; user: AuthUser }>("/auth/register", {
         method: "POST",
         body: JSON.stringify({ role, name, email, password }),
       });
