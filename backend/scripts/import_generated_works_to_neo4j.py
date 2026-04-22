@@ -1,22 +1,35 @@
 import json
 from pathlib import Path
 from neo4j import GraphDatabase
-import os
+import os # работа с переменными окружения (.env)
 
+# Адрес базы данных
 NEO4J_URI = os.getenv("NEO4J_URI", "bolt://127.0.0.1:17687")
+# Логин
 NEO4J_USER = os.getenv("NEO4J_USER") or os.getenv("NEO4J_USERNAME", "neo4j")
+# Пароль
 NEO4J_PASS = os.getenv("NEO4J_PASSWORD", "neo4j12345")
+# Имя базы
 NEO4J_DATABASE = os.getenv("NEO4J_DATABASE", "neo4j")
 
 
 def main():
+    # Выводим, какой файл сейчас выполняется
     print("RUNNING IMPORT FILE:", __file__)
 
+    # Чтение JSON-файла с книгами
+    # путь к файлу works.json
     data_path = Path(__file__).resolve().parents[1] / "data" / "works.json"
+    # читаем файл и превращаем в python-объект (список книг)
     works = json.loads(data_path.read_text(encoding="utf-8"))
 
+    # Подключение к Neo4j
+    # создаём драйвер (подключение к базе)
     driver = GraphDatabase.driver(NEO4J_URI, auth=(NEO4J_USER, NEO4J_PASS))
 
+    # Cypher запросы для Neo4j
+
+    # запрос для создания/обновления книги
     work_cypher = """
     MERGE (w:Work {id: $id})
     SET w.title = $title,
@@ -27,6 +40,7 @@ def main():
     RETURN w
     """
 
+    # запрос для связи книга-концепт
     concept_cypher = """
     MATCH (w:Work {id: $work_id})
     MERGE (c:Concept {name: $concept_name})
@@ -35,8 +49,12 @@ def main():
     RETURN c.name, r.weight
     """
 
+    # Запись в базу
+    # открываем сессию
     with driver.session(database=NEO4J_DATABASE) as session:
+        # перебираем все книги
         for w in works:
+            # создаём/обновляем книгу
             session.run(
                 work_cypher,
                 id=w["id"],
@@ -47,26 +65,34 @@ def main():
                 annotation=w.get("annotation"),
             )
 
+            # Обработка концептов
+            # берём словарь концептов, если есть
             concepts = w.get("concepts", {}) or {}
+            # перебираем концепты книги
             for concept_name, weight in concepts.items():
+                # пробуем преобразовать вес в число
                 try:
                     weight_num = float(weight)
                 except Exception:
+                    # если не получилось, пропускаем
                     continue
 
+                # если вес <= 0, не добавляем
                 if weight_num <= 0:
                     continue
 
+                # создаём концепт и связь
                 session.run(
                     concept_cypher,
                     work_id=w["id"],
                     concept_name=concept_name,
                     weight=weight_num,
                 )
-
+    # закрываем соединение с базой
     driver.close()
+    # выводим результат
     print(f"OK: imported works={len(works)} from {data_path}")
 
-
+# запуск файла
 if __name__ == "__main__":
     main()

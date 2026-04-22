@@ -556,3 +556,74 @@ a{ color: inherit; text-decoration: none; }
 @media (max-width: 980px){
   .adminGrid{ grid-template-columns: 1fr; }
 }
+
+@media (max-width: 640px){
+  .container{
+    padding: 10px;
+    display: block;
+  }
+
+  .card{
+    border-radius: 14px;
+  }
+
+  .header{
+    padding: 18px 16px 14px;
+  }
+
+  .content{
+    padding: 14px 16px 18px;
+  }
+
+  .panel{
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .brandRow{
+    align-items: flex-start;
+  }
+
+  .bookLogo{
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+  }
+
+  .bookSvg{
+    width: 28px;
+    height: 28px;
+  }
+
+  .title{
+    font-size: 22px;
+    line-height: 1.15;
+  }
+
+  .subtitle{
+    font-size: 14px;
+  }
+
+  .btn{
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .btnHint{
+    font-size: 12px;
+  }
+
+  .arrow{
+    margin-top: 2px;
+  }
+
+  .field input{
+    font-size: 16px;
+  }
+
+  .primaryBtn,
+  .fileBtn,
+  .tabBtn{
+    min-height: 44px;
+  }
+}

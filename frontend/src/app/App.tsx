@@ -12,10 +12,10 @@ import TeacherStudent from "../pages/dashboards/TeacherStudent";
 import Admin from "../pages/dashboards/AdminDashboard";
 
 const ROLE_CARDS: Array<{ role: Role; title: string; desc: string }> = [
-  { role: "student", title: "Ученик", desc: "Персональные рекомендации и траектория чтения" },
-  { role: "parent", title: "Родитель", desc: "Поддержка чтения и отчёты по динамике" },
-  { role: "teacher", title: "Учитель", desc: "Мониторинг класса и подборки" },
-  { role: "admin", title: "Администратор", desc: "Пользователи и контент" },
+  { role: "student", title: "Ученик", desc: "" },
+  { role: "parent", title: "Родитель", desc: "" },
+  { role: "teacher", title: "Учитель", desc: "" },
+  { role: "admin", title: "Администратор", desc: "" },
 ];
 
 function BrandHeader(props: { title: string; subtitle?: string }) {

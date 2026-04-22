@@ -37,6 +37,7 @@ type UserTextItem = {
 };
 
 const LS_USER_TEXTS_KEY = "rp_user_texts_v1";
+const LS_TEST_DRAFT_KEY = "rp_test_draft_v1";
 
 /* ---------------- utils ---------------- */
 
@@ -1732,6 +1733,9 @@ function TestPanel(props: {
   submitMsg: string | null;
   onSubmitConcepts01: (concepts01: Record<string, number>) => Promise<void>;
 }) {
+  const user = getUser();
+  const readerId = resolveReaderId(user);
+  const draftKey = getTestDraftKey(readerId, props.profileAge);
   const CORE_SCALES = new Set([
     "нравственный_выбор",
     "ответственность",
@@ -1828,6 +1832,19 @@ function TestPanel(props: {
   ];
 
   const [ordered] = useState<QuestionItem[]>(() => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const savedIds = Array.isArray(parsed?.orderedIds) ? parsed.orderedIds.map(String) : [];
+        if (savedIds.length) {
+          const byId = new Map(base.map((q) => [q.id, q]));
+          const restored = savedIds.map((id) => byId.get(id)).filter(Boolean) as QuestionItem[];
+          if (restored.length === base.length) return restored;
+        }
+      }
+    } catch {}
+
     const shuffled = shuffle(base.filter((q) => !q.attention));
     const att = base.find((q) => q.attention)!;
     const insertAt = Math.min(Math.max(10, Math.floor(shuffled.length * 0.55)), shuffled.length);
@@ -1836,13 +1853,53 @@ function TestPanel(props: {
   });
 
   const total = ordered.length;
-  const [answersById, setAnswersById] = useState<Record<string, Likert | undefined>>({});
-  const [step, setStep] = useState(0);
-  const [consent, setConsent] = useState(true);
+  const [answersById, setAnswersById] = useState<Record<string, Likert | undefined>>(() => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      const parsed = raw ? JSON.parse(raw) : null;
+      return parsed?.answersById && typeof parsed.answersById === "object" ? parsed.answersById : {};
+    } catch {
+      return {};
+    }
+  });
+  const [step, setStep] = useState(() => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      const parsed = raw ? JSON.parse(raw) : null;
+      const saved = Number(parsed?.step ?? 0);
+      return Number.isFinite(saved) ? Math.max(0, saved) : 0;
+    } catch {
+      return 0;
+    }
+  });
+  const [consent, setConsent] = useState(() => {
+    try {
+      const raw = localStorage.getItem(draftKey);
+      const parsed = raw ? JSON.parse(raw) : null;
+      return typeof parsed?.consent === "boolean" ? parsed.consent : true;
+    } catch {
+      return true;
+    }
+  });
   const [error, setError] = useState<string | null>(null);
 
   const current = ordered[step];
   const progress = Math.round((step / (total - 1)) * 100);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        draftKey,
+        JSON.stringify({
+          orderedIds: ordered.map((q) => q.id),
+          answersById,
+          step,
+          consent,
+          updatedAt: new Date().toISOString(),
+        })
+      );
+    } catch {}
+  }, [answersById, consent, draftKey, ordered, step]);
 
   function setLikert(v: Likert) {
     setAnswersById((prev) => ({ ...prev, [current.id]: v }));
@@ -1917,6 +1974,9 @@ function TestPanel(props: {
 
     const adjusted = applySocialDesirabilityPenalty(core01, sdMean);
     await props.onSubmitConcepts01(adjusted);
+    try {
+      localStorage.removeItem(draftKey);
+    } catch {}
   }
 
   return (
@@ -2799,6 +2859,78 @@ function StyleBlock() {
           height: 320px;
         }
       }
+
+      @media (max-width: 640px) {
+        .page {
+          padding: 12px 10px;
+        }
+
+        .card {
+          padding: 16px 14px 14px;
+          border-radius: 14px;
+        }
+
+        .h1 {
+          font-size: 22px;
+          line-height: 1.15;
+        }
+
+        .tabsRow {
+          gap: 8px;
+        }
+
+        .tabBtn {
+          width: 100%;
+          text-align: center;
+        }
+
+        .panel {
+          padding: 12px;
+          border-radius: 14px;
+        }
+
+        .qTop {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+
+        .qText {
+          font-size: 14px;
+        }
+
+        .likertRow {
+          gap: 8px;
+          justify-content: space-between;
+        }
+
+        .likertBtn {
+          flex: 1 1 calc(20% - 8px);
+          min-width: 44px;
+          height: 44px;
+        }
+
+        .likertLabels {
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .navRow {
+          flex-wrap: wrap;
+        }
+
+        .nextBtn {
+          margin-left: 0;
+        }
+
+        .navRow .btn,
+        .navRow .primaryBtn {
+          width: 100%;
+        }
+      }
     `}</style>
   );
+}
+
+function getTestDraftKey(readerId: string, age: string) {
+  return `${LS_TEST_DRAFT_KEY}_${readerId || "anon"}_${age || "16+"}`;
 }

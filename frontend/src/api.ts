@@ -3,6 +3,38 @@ import { getBackendBase } from "./config/backend";
 
 const API = getBackendBase();
 
+function formatApiError(detail: unknown): string {
+  if (typeof detail === "string" && detail.trim()) {
+    return detail;
+  }
+
+  if (Array.isArray(detail)) {
+    const parts = detail
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object") {
+          const msg = (item as any)?.msg;
+          const loc = Array.isArray((item as any)?.loc) ? (item as any).loc.join(" -> ") : "";
+          if (typeof msg === "string" && msg.trim()) {
+            return loc ? `${loc}: ${msg}` : msg;
+          }
+        }
+        return "";
+      })
+      .filter(Boolean);
+
+    return parts.length ? parts.join("; ") : JSON.stringify(detail);
+  }
+
+  if (detail && typeof detail === "object") {
+    const msg = (detail as any)?.message;
+    if (typeof msg === "string" && msg.trim()) return msg;
+    return JSON.stringify(detail);
+  }
+
+  return "Ошибка запроса";
+}
+
 export async function apiJson<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = getToken();
   const headers = new Headers(init.headers || {});
@@ -12,7 +44,7 @@ export async function apiJson<T>(path: string, init: RequestInit = {}): Promise<
 
   const res = await fetch(API + path, { ...init, headers });
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error((data as any)?.detail || "Ошибка запроса");
+  if (!res.ok) throw new Error(formatApiError((data as any)?.detail));
   return data as T;
 }
 

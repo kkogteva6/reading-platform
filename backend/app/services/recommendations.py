@@ -1,21 +1,14 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple, Literal
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
-from ..schemas import (
-    ReaderProfile,
-    Work,
-    GapItem,
-    WhyBlock,
-    ExplainedRecommendation,
-)
-from ..store import WORKS
-from .targets import TARGET_PROFILES, CONCEPT_ALIASES
-from ..services.profiles import get_profile
 from ..db import list_read_book_ids
+from ..schemas import ExplainedRecommendation, GapItem, ReaderProfile, WhyBlock, Work
+from ..services.profiles import get_profile
+from ..store import WORKS
 from .graph import get_works_from_neo4j
+from .targets import CONCEPT_ALIASES, TARGET_PROFILES
 
-# ----------------------------- Age helpers -----------------------------
 
 def parse_min_age(age: str) -> Optional[int]:
     try:
@@ -32,28 +25,20 @@ def is_age_compatible(reader_age: str, work_age: str) -> bool:
     return r_min >= w_min
 
 
-# ----------------------------- Gaps / scoring / explaining -----------------------------
-
 def compute_gaps(profile: ReaderProfile, target: Dict[str, float]) -> List[Dict[str, Any]]:
-    """
-    gap = target - current
-    direction:
-      - below: gap > 0  (не хватает)
-      - above: gap < 0  (выражено выше целевого)
-    """
     gaps: List[Dict[str, Any]] = []
     all_keys = set(target.keys()) | set(profile.concepts.keys())
-    for k in all_keys:
-        t = float(target.get(k, 0.0))
-        c = float(profile.concepts.get(k, 0.0))
-        gap = t - c
+    for key in all_keys:
+        target_value = float(target.get(key, 0.0))
+        current_value = float(profile.concepts.get(key, 0.0))
+        gap = target_value - current_value
         if abs(gap) < 1e-9:
             continue
         gaps.append(
             {
-                "concept": k,
-                "target": t,
-                "current": c,
+                "concept": key,
+                "target": target_value,
+                "current": current_value,
                 "gap": gap,
                 "direction": "below" if gap > 0 else "above",
             }
@@ -62,21 +47,16 @@ def compute_gaps(profile: ReaderProfile, target: Dict[str, float]) -> List[Dict[
 
 
 def iter_concept_weights_for_work(core_concept: str, work: Work) -> List[Tuple[str, float, Optional[str]]]:
-    """
-    Возвращает список (concept_name, effective_weight, via_core_or_None)
-    - core_concept -> вес как есть, via=None
-    - алиасы -> вес * coef, via=core_concept
-    """
     items: List[Tuple[str, float, Optional[str]]] = []
-    base_w = float(work.concepts.get(core_concept, 0.0))
-    if base_w > 0:
-        items.append((core_concept, base_w, None))
+    base_weight = float(work.concepts.get(core_concept, 0.0))
+    if base_weight > 0:
+        items.append((core_concept, base_weight, None))
 
     aliases = CONCEPT_ALIASES.get(core_concept, {})
     for alias, coef in aliases.items():
-        w = float(work.concepts.get(alias, 0.0)) * float(coef)
-        if w > 0:
-            items.append((alias, w, core_concept))
+        alias_weight = float(work.concepts.get(alias, 0.0)) * float(coef)
+        if alias_weight > 0:
+            items.append((alias, alias_weight, core_concept))
     return items
 
 
@@ -85,45 +65,39 @@ def work_score_by_gaps_with_explain(
     work: Work,
     mode: Literal["correction", "deepening"],
 ) -> Tuple[float, List[GapItem]]:
-    """
-    ВАЖНО: алиасы участвуют ДВУМЯ способами:
-      - в score
-      - в explain (gaps[]) отдельными строками, с via=core
-    """
     score = 0.0
     why_items: List[GapItem] = []
 
-    for g in gaps:
-        gap = float(g["gap"])
+    for gap_item in gaps:
+        gap = float(gap_item["gap"])
 
         if mode == "correction" and gap <= 0:
             continue
         if mode == "deepening" and gap >= 0:
             continue
 
-        core = str(g["concept"])
-        target = float(g["target"])
-        current = float(g["current"])
-        direction: Literal["below", "above"] = g["direction"]
+        core = str(gap_item["concept"])
+        target = float(gap_item["target"])
+        current = float(gap_item["current"])
+        direction: Literal["below", "above"] = gap_item["direction"]
 
-        # коэффициент для углубления (чтобы не “перекачивать” сильные темы)
-        deep_k = 0.45
+        deepening_factor = 0.45
 
-        for concept_name, w_eff, via in iter_concept_weights_for_work(core, work):
-            if w_eff <= 0:
+        for concept_name, effective_weight, via in iter_concept_weights_for_work(core, work):
+            if effective_weight <= 0:
                 continue
 
             if mode == "correction":
-                contrib = gap * w_eff  # gap > 0
+                contribution = gap * effective_weight
                 shown_gap = gap
             else:
-                contrib = abs(gap) * w_eff * deep_k  # gap < 0
-                shown_gap = gap  # оставляем отрицательным, чтобы direction=above было честно
+                contribution = abs(gap) * effective_weight * deepening_factor
+                shown_gap = gap
 
-            if contrib <= 0:
+            if contribution <= 0:
                 continue
 
-            score += contrib
+            score += contribution
             why_items.append(
                 GapItem(
                     concept=concept_name,
@@ -131,33 +105,22 @@ def work_score_by_gaps_with_explain(
                     current=current,
                     gap=shown_gap,
                     direction=direction,
-                    weight=float(w_eff),
+                    weight=float(effective_weight),
                     via=via,
                 )
             )
 
-    # сортируем по влиянию
-    why_items.sort(key=lambda x: abs(x.gap) * x.weight, reverse=True)
+    why_items.sort(key=lambda item: abs(item.gap) * item.weight, reverse=True)
     return score, why_items[:10]
 
 
 def has_meaningful_profile_data(profile: ReaderProfile) -> bool:
-    """
-    Данные есть, если:
-    - concepts не пустой
-    - и сумма значений > очень малого порога
-    """
     if not profile.concepts:
         return False
-    return sum(float(v) for v in profile.concepts.values()) > 1e-6
+    return sum(float(value) for value in profile.concepts.values()) > 1e-6
 
 
 def ensure_works_loaded() -> None:
-    """
-    Recommendations read books from the in-memory WORKS cache.
-    In local/home mode startup stays "safe", so we lazily populate the cache
-    on first recommendation request instead of forcing Neo4j during app boot.
-    """
     if WORKS:
         return
 
@@ -182,58 +145,39 @@ def recommend_works_explain(
         return []
 
     target = TARGET_PROFILES.get(profile.age)
-
-    # fallback для новых возрастных групп
     if not target and profile.age == "18+":
         target = TARGET_PROFILES.get("16+")
-
     if not target and profile.age == "средняя школа":
         target = TARGET_PROFILES.get("12+")
-
     if not target:
         return []
 
     gaps = compute_gaps(profile, target)
-
-    has_below = any(float(g["gap"]) > 0 for g in gaps)
+    has_below = any(float(item["gap"]) > 0 for item in gaps)
     mode: Literal["correction", "deepening"] = "correction" if has_below else "deepening"
 
     scored: List[Tuple[float, Work, List[GapItem]]] = []
-    for w in works:
-        print("=== WORK ===")
-        print("TITLE:", w.title)
-
-        print("WORK concepts:")
-        for c, val in (w.concepts or {}).items():
-            print("  ", c)
-
-        print("PROFILE concepts:")
-        print(list(profile.concepts.keys()))
-        print("-------------------")
-
-        
-        if not is_age_compatible(profile.age, w.age):
+    for work in works:
+        if not is_age_compatible(profile.age, work.age):
             continue
 
-        s, why_items = work_score_by_gaps_with_explain(gaps, w, mode)
-        if s > 0:
-            scored.append((s, w, why_items))
-        if not scored:
-    # если вообще ничего не подошло — возвращаем просто топ книг
-            scored = [(0.0, w, []) for w in works if is_age_compatible(profile.age, w.age)]
+        score, why_items = work_score_by_gaps_with_explain(gaps, work, mode)
+        if score > 0:
+            scored.append((score, work, why_items))
 
-    scored.sort(key=lambda x: x[0], reverse=True)
+    if not scored:
+        scored = [(0.0, work, []) for work in works if is_age_compatible(profile.age, work.age)]
+
+    scored.sort(key=lambda item: item[0], reverse=True)
 
     return [
         ExplainedRecommendation(
-            work=w,
-            why=WhyBlock(mode=mode, score=float(s), gaps=why_items),
+            work=work,
+            why=WhyBlock(mode=mode, score=float(score), gaps=why_items),
         )
-        for s, w, why_items in scored[:top_n]
+        for score, work, why_items in scored[:top_n]
     ]
 
-
-# ----------------------------- Public API used by routers -----------------------------
 
 def get_recommendations_explain(reader_id: str, top_n: int = 5):
     profile = get_profile(reader_id)
@@ -243,16 +187,6 @@ def get_recommendations_explain(reader_id: str, top_n: int = 5):
 
     ensure_works_loaded()
 
-    read_ids_raw = list_read_book_ids(reader_id)
-    read_ids = {str(x).strip().lower() for x in read_ids_raw}
-
-
-    works_filtered = [
-        w for w in WORKS
-        if str(w.id).strip().lower() not in read_ids
-    ]
-
-
-    result = recommend_works_explain(profile, works_filtered, top_n=top_n)
-
-    return result
+    read_ids = {str(item).strip().lower() for item in list_read_book_ids(reader_id)}
+    works_filtered = [work for work in WORKS if str(work.id).strip().lower() not in read_ids]
+    return recommend_works_explain(profile, works_filtered, top_n=top_n)
