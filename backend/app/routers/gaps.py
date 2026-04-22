@@ -13,6 +13,9 @@ def get_gaps(reader_id: str):
     except KeyError:
         profile = ReaderProfile(id=reader_id, age="16+", concepts={})
 
+    if not profile.concepts or sum(float(v) for v in profile.concepts.values()) <= 1e-6:
+        return []
+
     target = TARGET_PROFILES.get(profile.age)
     if not target:
         return []

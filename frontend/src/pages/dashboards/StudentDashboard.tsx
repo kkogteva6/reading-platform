@@ -520,6 +520,11 @@ export default function StudentDashboard() {
   }
 
   const top = useMemo(() => topConcepts(profile?.concepts, 10), [profile]);
+  const hasMeaningfulProfile = useMemo(() => {
+    const concepts = profile?.concepts ?? {};
+    const values = Object.values(concepts).map(Number).filter(Number.isFinite);
+    return values.length > 0 && values.some((v) => v > 1e-6);
+  }, [profile]);
 
   const growthTopicsTop = useMemo(() => {
     return (gaps ?? []).filter((g) => g.direction === "below" && g.gap > 0).slice(0, 5);
@@ -893,7 +898,7 @@ export default function StudentDashboard() {
                 <div className="subTitle">Текущие концепты (топ)</div>
                 <div className="chips">
                   {top.length === 0 ? (
-                    <span className="muted">Нет данных</span>
+                    <span className="muted">Профиль ещё не сформирован</span>
                   ) : (
                     top.map(([k]) => (
                       <span key={k} className="chip">
@@ -912,7 +917,11 @@ export default function StudentDashboard() {
 
                 <div className="chips">
                   {growthTopicsTop.length === 0 && !gapsLoading ? (
-                    <span className="muted">Выраженных тем роста не найдено — можно углублять сильные стороны.</span>
+                    <span className="muted">
+                      {hasMeaningfulProfile
+                        ? "Выраженных тем роста не найдено — можно углублять сильные стороны."
+                        : "Пройдите анкету, добавьте текст или отзыв на книгу — после этого появятся персональные темы роста."}
+                    </span>
                   ) : (
                     growthTopicsTop.map((g) => (
                       <span key={g.concept} className="chip chipGrowth">
