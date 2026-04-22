@@ -153,12 +153,32 @@ function Login() {
             <div className="formGrid">
               <label className="field">
                 <span>Email</span>
-                <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" />
+                <input
+                  name="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onInput={(e) => setEmail((e.target as HTMLInputElement).value)}
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  inputMode="email"
+                  placeholder="name@example.com"
+                />
               </label>
 
               <label className="field">
                 <span>Пароль</span>
-                <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="••••" />
+                <input
+                  name="password"
+                  type="password"
+                  value={pass}
+                  onChange={(e) => setPass(e.target.value)}
+                  onInput={(e) => setPass((e.target as HTMLInputElement).value)}
+                  autoComplete="current-password"
+                  placeholder="••••"
+                />
               </label>
             </div>
 
@@ -243,23 +263,41 @@ function Register() {
               <label className="field">
                 <span>ФИО</span>
                 <input
+                  name="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  onInput={(e) => setName((e.target as HTMLInputElement).value)}
+                  autoComplete="name"
                   placeholder="Например: Иванова Анна Александровна"
                 />
               </label>
 
               <label className="field">
                 <span>Email</span>
-                <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="name@example.com" />
+                <input
+                  name="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onInput={(e) => setEmail((e.target as HTMLInputElement).value)}
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  inputMode="email"
+                  placeholder="name@example.com"
+                />
               </label>
 
               <label className="field">
                 <span>Пароль</span>
                 <input
+                  name="password"
                   type="password"
                   value={pass}
                   onChange={(e) => setPass(e.target.value)}
+                  onInput={(e) => setPass((e.target as HTMLInputElement).value)}
+                  autoComplete="new-password"
                   placeholder="Минимум 4 символа"
                 />
               </label>
