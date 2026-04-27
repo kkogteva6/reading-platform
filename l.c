@@ -1,45 +1,84 @@
-chan requests = [0] of { byte }; // синхронный канал для запросов
-chan responses = [0] of { byte }; // синхронный канал для ответов
+#include <zmq.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-proctype Client() {
-byte req_id = 1;
-byte resp;
-printf("Client: starting\n");
+// Клиент ZeroMQ.
 
-// Отправляем первый запрос
-printf("Client: sending request %d\n", req_id);
-requests!req_id;
+int main() {
+    // Получаем PID клиента, чтобы показать, какой клиент отправил запрос.
+    pid_t pid = getpid();
 
-// ОШИБКА: пытаемся отправить второй запрос, не дождавшись ответа
-req_id = 2;
-printf("Client: sending request %d (WRONG! no wait)\n", req_id);
-requests!req_id; // здесь клиент заблокируется, если сервер не готов
-принять
+    // Создаём контекст ZeroMQ
+    void *context = zmq_ctx_new();
 
-// Теперь пытаемся получить ответы
-responses?resp;
-printf("Client: received response for request %d\n", resp);
-responses?resp;
-printf("Client: received response for request %d\n", resp);
-printf("Client: finished\n");
-}
-proctype Server() {
-byte req;
-byte resp_id;
-printf("Server: starting\n");
-// Сервер работает в цикле: принять запрос -> обработать -> ответить
-do
-:: requests?req ->
-printf("Server: received request %d\n", req);
-// "Обработка" запроса
-resp_id = req;
-printf("Server: processing...\n");
-// Отправка ответа
-printf("Server: sending response for %d\n", resp_id);
-responses!resp_id;
-od
-}
-init {
-run Client();
-run Server();
+    if (context == NULL) {
+        perror("zmq_ctx_new");
+        exit(EXIT_FAILURE);
+    }
+
+    // Создаём сокет типа REQ. Он будет отправлять запрос серверу и ждать ответ
+    void *requester = zmq_socket(context, ZMQ_REQ);
+
+    if (requester == NULL) {
+        perror("zmq_socket");
+        zmq_ctx_destroy(context);
+        exit(EXIT_FAILURE);
+    }
+
+    // Подключаемся к серверу
+    int rc = zmq_connect(requester, "tcp://localhost:5555");
+
+    if (rc != 0) {
+        perror("zmq_connect");
+        zmq_close(requester);
+        zmq_ctx_destroy(context);
+        exit(EXIT_FAILURE);
+    }
+    printf("ZeroMQ клиент запущен. PID клиента: %d\n", pid);
+    printf("Подключение к серверу выполнено.\n");
+
+    // Формируем запрос серверу
+    char request[256];
+
+    snprintf(
+        request,
+        sizeof(request),
+        "Привет от ZeroMQ-клиента PID=%d",
+        pid
+    );
+
+    // Отправляем запрос серверу
+    if (zmq_send(requester, request, strlen(request) + 1, 0) == -1) {
+        perror("zmq_send");
+        zmq_close(requester);
+        zmq_ctx_destroy(context);
+        exit(EXIT_FAILURE);
+    }
+    printf("Запрос отправлен серверу.\n");
+    printf("Ожидание ответа...\n");
+
+    // Получаем ответ от сервера
+    char response[256];
+
+    memset(response, 0, sizeof(response));
+
+    int bytes = zmq_recv(requester, response, sizeof(response) - 1, 0);
+
+    if (bytes == -1) {
+        perror("zmq_recv");
+        zmq_close(requester);
+        zmq_ctx_destroy(context);
+        exit(EXIT_FAILURE);
+    }
+    printf("Ответ получен от сервера:\n");
+    printf("%s\n", response);
+
+    // Закрываем сокет и уничтожаем контекст
+    zmq_close(requester);
+    zmq_ctx_destroy(context);
+
+    printf("Клиент завершил работу.\n");
+    return 0;
 }

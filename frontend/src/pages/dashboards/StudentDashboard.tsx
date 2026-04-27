@@ -951,10 +951,10 @@ export default function StudentDashboard() {
                 {profileLoading && <div className="muted">Загрузка профиля…</div>}
                 {profileErr && <div className="error">{profileErr}</div>}
 
-                <div className="resultsLead">
+                {/* <div className="resultsLead">
                   Это не оценка личности. Ниже показано, какие темы сейчас чаще проявляются в профиле и на что можно
                   обратить внимание в чтении.
-                </div>
+                </div> */}
 
                 <div className="insightGrid">
                   <div className="insightCard">
